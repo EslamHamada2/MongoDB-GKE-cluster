@@ -1,0 +1,7 @@
+FROM mongo
+WORKDIR /app
+EXPOSE 27017
+COPY init-mongo.sh .
+RUN chmod +x init-mongo.sh
+COPY  mongodb.key ./mongodb.key
+RUN chown 1000:1000 mongodb.key

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-pod
+  labels:
+    app: my-app
+    name: app-pod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+      name: app-pod 
+  template:
+    metadata:
+      name: app-pod
+      labels:
+        app: my-app
+        name: app-pod
+    spec:
+      containers:
+      - name: my-app
+        image: eslamhamada/node-app
+        ports:
+        - containerPort: 8282

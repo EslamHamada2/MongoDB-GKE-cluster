@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongoset
+  labels:
+    app: my-app
+    name: mongo-pod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+      name: mongo-pod
+  serviceName: "mongo-service"
+  #minReadySeconds: 10     
+  template:
+    metadata:
+      name: mongo-pod
+      labels:
+        app: my-app
+        name: mongo-pod
+        #replicaset: mongo-rs
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      #terminationGracePeriodSeconds: 10
+      containers:
+        - name: mongo
+          image: eslamhamada/mongo-cluster
+          livenessProbe:
+          exec:
+            command: ["sh", "-c","/app/init-mongo.sh"]
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          successThreshold: 1
+        env:
+        - name: MONGO_HOSTNAME
+          value: "mongo-service" 
+        - name: MONGO_PORT 
+          value: 27017
+        - name: MONGO_DB
+          value: "testdb" 
+        MONGO_REPLICASET: "mongo-rs"
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: secret-mongo
+              key: username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: secret-mongo
+              key: password
+        imagePullPolicy: Always
+        args: ["--replSet", "mongo-rs", "--keyFile","/app/mongodb.key"]
+          # command:
+          #   - "mongod"
+          #   - "--bind_ip"
+          #   - "0.0.0.0"
+          #   - "--replSet"
+          #   - "mainset"
+          resources:
+            requests:
+              cpu: 0.2
+              memory: ".5Gi"   
+          ports:
+          - containerPort: 27017
+          
+          volumeMounts:
+          - name: mongo-storage
+          mountPath: /data/db
+ 
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-storage
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      storageClassName: "my-storage-class"
+      resources:
+        requests:
+          storage: 2Gi
